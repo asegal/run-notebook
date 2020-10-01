@@ -2,37 +2,26 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as fs from "fs";
 import * as path from "path";
-
-interface IRunnerContext {
-  os: string;
-  tool_cache: string;
-  temp: string;
-  workspace: string;
-}
-
-interface IGithubContext {
-  workspace: string;
-}
-
-// These are added run actions using "env:"
-let runner: IRunnerContext = JSON.parse(process.env.RUNNER || "");
-let secrets: any = JSON.parse(process.env.SECRETS || "");
-let github: IGithubContext = JSON.parse(process.env.GITHUB || "");
-
-const outputDir = path.join(runner.temp, "nb-runner");
-const scriptsDir = path.join(runner.temp, "nb-runner-scripts");
-const executeScriptPath = path.join(scriptsDir, "nb-runner.py");
-const secretsPath = path.join(runner.temp, "secrets.json");
-const papermillOutput = path.join(github.workspace, "papermill-nb-runner.out");
-const requirements = 'requirements.txt';
-const requirementsFile = path.join(github.workspace, requirements);
+import * as glob from "glob";
 
 async function run() {
   try {
-    const notebookFile = core.getInput('notebook');
-    const paramsFile = core.getInput('params');
+    const workspace = core.getInput('workspace');
+    const papermillOutput = path.join(workspace, "papermill-nb-runner.out");
+
+    const requirements = 'requirements.txt';
+    const requirementsFile = path.join(workspace, requirements);
+
+    const temp_dir = core.getInput('temp_dir');
+    const outputDir = path.join(temp_dir, "nb-runner");
+    const scriptsDir = path.join(temp_dir, "nb-runner-scripts");
+
+    const notebookFilesPattern = core.getInput('notebooks');
+    const notebookFiles = glob.sync(path.join(workspace, notebookFilesPattern));
+
     const isReport = core.getInput('isReport');
     const poll = core.getInput('poll');
+
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir);
     }
@@ -41,41 +30,36 @@ async function run() {
       fs.mkdirSync(scriptsDir);
     }
 
-    fs.writeFileSync(secretsPath, JSON.stringify(secrets));
-
-    const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
     // Install dependencies
     await exec.exec('pip install --upgrade setuptools');
     if (fs.existsSync(requirementsFile)){
-      await exec.exec(`python 3 -m pip install -r ${requirements}`)
+      await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     await exec.exec('python3 -m pip install papermill ipykernel nbformat');
     await exec.exec('python3 -m ipykernel install --user');
 
-    // Execute notebook
-    const pythonCode = `
+    // Execute notebooks
+    await Promise.all(notebookFiles.map(async (notebookFile: string, index: number) => {
+      const executeScriptPath = path.join(scriptsDir, `nb-runner-${index}.py`);
+      const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
+
+      const pythonCode = `
 import papermill as pm
 import os
+from os import path, system
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
-
-params = {}
-paramsPath = '${paramsFile}'
-extraParams = dict({ "secretsPath": '${secretsPath}' })
-if paramsPath:
-  with open(paramsPath, 'r') as paramsFile:
-    params = json.loads(paramsFile.read())
 
 isDone = False
 def watch():
     global isDone
     while not isDone:
       sleep(15)
-      os.system('echo "***Polling latest output status result***"')
-      os.system('tail -n 15 ${papermillOutput}')
-      os.system('echo "***End of polling latest output status result***"')
+      system('echo "***Polling latest output status result***"')
+      system('tail -n 15 ${papermillOutput}')
+      system('echo "***End of polling latest output status result***"')
 
 def run():
   global isDone
@@ -83,7 +67,6 @@ def run():
     pm.execute_notebook(
       input_path='${notebookFile}',
       output_path='${parsedNotebookFile}',
-      parameters=dict(extraParams, **params),
       log_output=True,
       report_mode=${!!isReport ? "True" : "False"}
     )
@@ -104,10 +87,13 @@ for task in as_completed(results):
     sys.exit(1)
 `;
 
-    fs.writeFileSync(executeScriptPath, pythonCode);
+      fs.writeFileSync(executeScriptPath, pythonCode);
 
-    await exec.exec(`cat ${executeScriptPath}`)
-    await exec.exec(`python3 ${executeScriptPath}`);
+      await exec.exec(`cat ${executeScriptPath}`)
+      await exec.exec(`python3 ${executeScriptPath}`);
+    })).catch((error) => {
+      core.setFailed(error.message);
+    });
 
   } catch (error) {
     core.setFailed(error.message);
