@@ -89,8 +89,9 @@ for task in as_completed(results):
 
       fs.writeFileSync(executeScriptPath, pythonCode);
 
-      await exec.exec(`cat ${executeScriptPath}`)
-      await exec.exec(`python3 ${executeScriptPath}`);
+      //await exec.exec(`cat ${executeScriptPath}`)
+      //await exec.exec(`python3 ${executeScriptPath}`);
+      await exec.exec(`jupyter nbconvert "${notebookFile}" --execute --no-input --to html --output ${parsedNotebookFile}.html`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
