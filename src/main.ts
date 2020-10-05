@@ -91,7 +91,7 @@ for task in as_completed(results):
 
       //await exec.exec(`cat ${executeScriptPath}`)
       //await exec.exec(`python3 ${executeScriptPath}`);
-      await exec.exec(`jupyter nbconvert "${notebookFile}" --execute --no-input --to html --output ${parsedNotebookFile}.html`);
+      await exec.exec(`cat ${notebookFile} | jupyter nbconvert --stdin --execute --no-input --to html --output ${parsedNotebookFile}.html`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
