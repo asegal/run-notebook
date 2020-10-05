@@ -53,7 +53,7 @@ async function run() {
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-      await exec.exec(`jupyter nbconvert --execute --no-input --to custom --template=${templatePath} --output "${parsedNotebookFile}" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --to pdf --output "${parsedNotebookFile}.pdf" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
