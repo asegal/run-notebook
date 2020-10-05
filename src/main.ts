@@ -42,8 +42,6 @@ async function run() {
     // to skip preprocerrs (like 'no-input'), so we need a dumb custom template which just outputs the notebook.
     const templatePath = path.join(scriptsDir, `custom_notebook.tpl`);
     const templateCode = `
-      {% extends 'null.tpl'%}
-
       {%- block body %}
       {{ nb | json_dumps }}
       {% endblock body %}
