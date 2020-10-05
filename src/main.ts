@@ -36,7 +36,7 @@ async function run() {
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
-    await exec.exec('python3 -m pip install nbconvert ipykernel');
+    await exec.exec('python3 -m pip install nbconvert ipykernel papermill');
     await exec.exec('python3 -m ipykernel install --user');
 
     // Execute notebooks
@@ -92,7 +92,7 @@ for task in as_completed(results):
 
       //await exec.exec(`cat ${executeScriptPath}`)
       //await exec.exec(`python3 ${executeScriptPath}`);
-      await exec.exec(`jupyter nbconvert --stdin --execute --no-input --to html --output "${parsedNotebookFile}.html" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --to html --output "${parsedNotebookFile}.html" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
