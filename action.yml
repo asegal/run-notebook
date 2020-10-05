@@ -15,10 +15,6 @@ inputs:
     description: 'If True, will hide inputs in notebook'
     default: 'False'
     required: False
-  poll:
-    description: 'If True, will hide poll for output'
-    default: 'False'
-    required: False
 branding:
   icon: 'book'
   color: 'orange'
