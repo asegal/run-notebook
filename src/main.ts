@@ -51,9 +51,9 @@ async function run() {
     const noInput = isReport ? '--no-input' : '';
 
     // Execute notebooks
-    await Promise.all(notebookFiles.map(async (notebookFile: string, index: number) => {
+    await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-      await exec.exec(`jupyter nbconvert --execute ${noInput} --to custom --template=${templatePath} --output "${parsedNotebookFile}" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --to custom --template=${templatePath} --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
