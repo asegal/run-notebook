@@ -37,22 +37,12 @@ async function run() {
     await exec.exec('python3 -m pip install nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
-    // create custom template for nbconvert. Nbconvert has a bug which causes notebook to notebook conversions
-    // to skip preprocerrs (like 'no-input'), so we need a dumb custom template which just outputs the notebook.
-    const templatePath = path.join(scriptsDir, `custom_notebook.tpl`);
-    const templateCode = `
-      {%- block body %}
-      {{ nb | json_dumps }}
-      {% endblock body %}
-    `;
-    fs.writeFileSync(templatePath, templateCode);
-
     //const noInput = isReport ? '--no-input' : '';
 
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-      await exec.exec(`jupyter nbconvert --execute --no-input --allow-chromium-download --to webpdf --template classic --output "${parsedNotebookFile}" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --allow-chromium-download --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
