@@ -34,7 +34,7 @@ async function run() {
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
-    await exec.exec('python3 -m pip install nbconvert nbconvert[webpdf] ipykernel');
+    await exec.exec('python3 -m pip install nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
     // create custom template for nbconvert. Nbconvert has a bug which causes notebook to notebook conversions
