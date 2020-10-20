@@ -52,7 +52,7 @@ async function run() {
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-      await exec.exec(`jupyter nbconvert --execute --no-input --to webpdf --output "${parsedNotebookFile}.pdf" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --allow-chromium-download --to webpdf --output "${parsedNotebookFile}.pdf" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
