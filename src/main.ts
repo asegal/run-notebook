@@ -18,8 +18,7 @@ async function run() {
     const notebookFilesPattern = core.getInput('notebooks');
     const notebookFiles = glob.sync(path.join(workspace, notebookFilesPattern));
 
-    const isReport = core.getInput('isReport');
-    const poll = core.getInput('poll');
+    //const isReport = core.getInput('isReport');
 
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir);
@@ -35,7 +34,7 @@ async function run() {
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
-    await exec.exec('python3 -m pip install nbconvert ipykernel');
+    await exec.exec('python3 -m pip install nbconvert nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
     // create custom template for nbconvert. Nbconvert has a bug which causes notebook to notebook conversions
@@ -48,12 +47,12 @@ async function run() {
     `;
     fs.writeFileSync(templatePath, templateCode);
 
-    const noInput = isReport ? '--no-input' : '';
+    //const noInput = isReport ? '--no-input' : '';
 
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-      await exec.exec(`jupyter nbconvert --execute --no-input --to pdf --output "${parsedNotebookFile}.pdf" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --to webpdf --output "${parsedNotebookFile}.pdf" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
