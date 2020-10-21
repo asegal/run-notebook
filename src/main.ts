@@ -7,6 +7,7 @@ import * as glob from "glob";
 async function run() {
   try {
     const workspace = core.getInput('workspace');
+    const isReport = core.getInput('isReport');
 
     const requirements = 'requirements.txt';
     const requirementsFile = path.join(workspace, requirements);
@@ -34,15 +35,55 @@ async function run() {
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
-    await exec.exec('python3 -m pip install pyppeteer nbconvert[webpdf] ipykernel');
+    await exec.exec('python3 -m pip install nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
-    //const noInput = isReport ? '--no-input' : '';
+    //Write out an empty notebook and convert it, in order to trigger installation of pypetteer
+    //Otherwise, there is a race condition which causes multiple installs leading to fatal error
+    //when nbconvert is run via Promise.all.
+    const emptyNotebook = `
+      {
+         "cells": [
+          {
+           "cell_type": "code",
+           "execution_count": null,
+           "metadata": {},
+           "outputs": [],
+           "source": []
+          }
+         ],
+         "metadata": {
+          "kernelspec": {
+           "display_name": "Python 3",
+           "language": "python",
+           "name": "python3"
+          },
+          "language_info": {
+           "codemirror_mode": {
+            "name": "ipython",
+            "version": 3
+           },
+           "file_extension": ".py",
+           "mimetype": "text/x-python",
+           "name": "python",
+           "nbconvert_exporter": "python",
+           "pygments_lexer": "ipython3",
+           "version": "3.7.9"
+          }
+         },
+         "nbformat": 4,
+         "nbformat_minor": 4
+      }
+    `;
+    const emptyNotebookFile = path.join(scriptsDir, 'empty.ipynb');
+    fs.writeFileSync(emptyNotebookFile, emptyNotebook);
+    await exec.exec(`jupyter nbconvert --to webpdf --allow_chromium_download --output "${emptyNotebookFile}" "${emptyNotebookFile}"`);
 
+    const noInput = isReport ? '--no-input' : '';
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile, '.ipynb'));
-      await exec.exec(`jupyter nbconvert --execute --no-input --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
+      exec.exec(`jupyter nbconvert --execute ${noInput}--to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
