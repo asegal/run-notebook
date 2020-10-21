@@ -83,7 +83,7 @@ async function run() {
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile, '.ipynb'));
-      exec.exec(`jupyter nbconvert --execute ${noInput}--to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
+      exec.exec(`jupyter nbconvert --execute ${noInput} --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
