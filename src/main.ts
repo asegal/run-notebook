@@ -34,7 +34,7 @@ async function run() {
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
     //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
-    await exec.exec('python3 -m pip install nbconvert[webpdf] ipykernel');
+    await exec.exec('python3 -m pip install pyppeteer nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
     //const noInput = isReport ? '--no-input' : '';
@@ -42,7 +42,7 @@ async function run() {
     // Execute notebooks
     await Promise.all(notebookFiles.map(async (notebookFile: string) => {
       const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile, '.ipynb'));
-      await exec.exec(`jupyter nbconvert --execute --no-input --allow-chromium-download --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
+      await exec.exec(`jupyter nbconvert --execute --no-input --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
