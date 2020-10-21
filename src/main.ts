@@ -77,7 +77,7 @@ async function run() {
     `;
     const emptyNotebookFile = path.join(scriptsDir, 'empty.ipynb');
     fs.writeFileSync(emptyNotebookFile, emptyNotebook);
-    await exec.exec(`jupyter nbconvert --to webpdf --allow_chromium_download --output "${emptyNotebookFile}" "${emptyNotebookFile}"`);
+    await exec.exec(`jupyter nbconvert --execute --to webpdf --allow-chromium-download --output "${emptyNotebookFile}" "${emptyNotebookFile}"`);
 
     const noInput = isReport ? '--no-input' : '';
     // Execute notebooks
